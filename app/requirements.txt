@@ -1,0 +1,7 @@
+clickhouse_driver==0.2.3
+confluent_kafka==1.8.2
+Faker==13.4.0
+fastapi==0.75.2
+fastapi_versioning==0.10.0
+pydantic==1.9.0
+uvicorn[standard]
