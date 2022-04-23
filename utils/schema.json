@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "properties": {
+    "time": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "site_id": {
+      "type": "string"
+    },
+    "correlation_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "time",
+    "type",
+    "site_id",
+    "correlation_id"
+  ],
+  "title": "captcha",
+  "type": "object"
+}
