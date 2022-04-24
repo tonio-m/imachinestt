@@ -13,7 +13,7 @@ async def send_kafka_message(bootstrap_server: str, topic: str, message: str) ->
     return { "topic": topic, "message": message, "status": status}
 
 
-async def query_metrics(host: str, port: int, site_ids: list[str]) -> dict:
+async def query_report(host: str, port: int, site_ids: list[str]) -> dict:
     client = Client(host=host,port=port)
 
     where_statement = ""
