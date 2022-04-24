@@ -15,12 +15,19 @@ async def send_kafka_message(bootstrap_server: str, topic: str, message: str) ->
 
 async def query_report(host: str, port: int, site_ids: list[str]) -> dict:
     client = Client(host=host,port=port)
+    query, replacement_variables = await __build_report_query(site_ids)
+    results = client.execute(query,replacement_variables)
+    results_dic = await __results_to_dict(results)
+    formatted_results_dic = await __format_result_dict(results_dic)
+    return formatted_results_dic
 
+
+async def __build_report_query(site_ids: list[str]) -> tuple[str, dict]:
     where_statement = ""
-    replacement_variables = {}
+    query_parameters = {}
     if len(site_ids) > 0:
         conditions = [f'site_id = %(site_id{i})s' for i in range(len(site_ids))]
-        replacement_variables = {f'site_id{i}': site_id for i,site_id in enumerate(site_ids)}
+        query_parameters = {f'site_id{i}': site_id for i,site_id in enumerate(site_ids)}
         where_statement = 'WHERE ' + ' OR '.join(conditions)
 
     query = f"""
@@ -33,9 +40,7 @@ async def query_report(host: str, port: int, site_ids: list[str]) -> dict:
     {where_statement} 
     GROUP BY date, site_id, type;
     """
-    results = client.execute(query,replacement_variables)
-    results_dic = await __results_to_dict(results)
-    return results_dic
+    return (query,query_parameters)
 
 
 async def __results_to_dict(results: list[list]) -> dict:
@@ -54,3 +59,18 @@ async def __results_to_dict(results: list[list]) -> dict:
     else:
         result_dic = {}
     return result_dic
+
+
+async def __format_result_dict(result_dic: dict) -> dict:
+    counters = []
+    for date,site_ids_dic in result_dic.items():
+        for site_id, v in site_ids_dic.items():
+            served = v['serve'] if 'serve' in v else 0
+            solved = v['solve'] if 'solve' in v else 0
+            counters.append({
+                'date': date,
+                'site_id': site_id,
+                'served': served,
+                'solved': solved
+            })
+    return {'counters': counters}
