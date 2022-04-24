@@ -111,5 +111,5 @@ kubectl port-forward -n captcha-api service/captcha-api 8000:8000
 
 curl localhost:8000/v1/
 
-:)
+# :)
 ```
