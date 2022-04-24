@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: captcha-api
 spec:
   containers:
-  - name: myclickhouse 
+  - name: captcha-api
     image: mrmtonio/captcha-api
     env:
     - name: CLICKHOUSE_PORT
