@@ -1,0 +1,13 @@
+curl -X POST localhost:8000/v1/events \
+-d '
+{
+  "site_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "type": "serve",
+  "correlation_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "time": "2001-01-01T05:55:07"
+}
+' \
+-H 'Content-Type: application/json'
+
+curl 'http://localhost:8000/v1/metrics?site_id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' \
+-H 'Content-Type: application/json'
