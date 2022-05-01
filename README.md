@@ -70,46 +70,80 @@ There are some things that should be improved in a production deployment:
 - Kafka has no SSL configured for certificate authentication and for in transit encryption.
 - I didn't configure any ingress on k8s for the services
 
-## Setup
-
+## Deployment
 ```sh
 # create k8s cluster on AWS
 eksctl create cluster -f ./deployments/cluster/eks.yaml
 aws eks update-kubeconfig --name imachines-tt
 
 # deploy clickhouse
+kubectl create namespace clickhouse
 kubens clickhouse
 kubectl apply -f ./deployments/clickhouse/deployment.yaml
 
 # deploy kafka
+kubectl create namespace confluent
 kubens confluent
 helm repo add confluentinc https://packages.confluent.io/helm
 helm repo update
 helm upgrade --install confluent-operator confluentinc/confluent-for-kubernetes
 kubectl apply -f ./deployments/kafka/confluent-platform-singlenode.yaml
 
-# deploy API
-# (I already built and pushed the image)
-kubens captcha-api
-kubectl apply -f ./deployments/app/deployment.yaml
+# build API container
+docker login
+cd app/
+docker build . -t mrmtonio/captcha-api:latest
+docker push mrmtonio/captcha-api:latest
 
-####### MANUAL STEPS #########
-## Create Kafka Topic
-# use the command below to go on the kafka control center
-kubectl port-forward -n confluent service/controlcenter 9021:9021
+# deploy API
+kubectl create namespace captcha-api
+kubens captcha-api
+cd ..
+kubectl apply -f ./deployments/app/deployment.yaml
+```
+
+## Setup
+```sh
+# port forward services to localhost
+kubectl port-forward -n confluent service/controlcenter 9021:9021 &
+kubectl port-forward -n clickhouse service/myclickhouse 8123:8123 &
+kubectl port-forward -n captcha-api service/captcha-api 8000:8000 &
+
+## Create a Kafka Topic
+open http://localhost:9021
+# Home > Cluster > Topics > Add Topic
 # create a topic named `captcha`
-# after creating go on `schema`, select Jsonschema and paste the contents of ./utils/schema.json
+# Topics > captcha > Schema > Set a Schema > JSON Schema
+# paste the contents of the file ./utils/schema.json
 
 ## Create Kafka table on Clickhouse
 # use the command below to go on the clickhouse UI
-kubectl port-forward -n clickhouse service/myclickhouse 8123:8123
 # run all the commands on ./utils/create_table.sql
 
 #############################
+```
+## Testing
+```sh
 # Now you can go ahead and test the API
-kubectl port-forward -n captcha-api service/captcha-api 8000:8000
 
+cd app/
+export API_URL='http://localhost:8000/v1/'
+pytest tests
+
+# curl commands that might be useful
 curl localhost:8000/v1/
 
-# :)
+# get a report
+curl 'http://localhost:8000/v1/report?site_id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' -H 'Content-Type: application/json'
+
+# send a captcha event
+curl -X POST localhost:8000/v1/event -d $json -H 'Content-Type: application/json'
+
+# send many captcha events from a json file
+while read -r $json
+do
+  curl -X POST localhost:8000/v1/event -d $json -H 'Content-Type: application/json'
+done < data.ndjson
+
+:)
 ```
