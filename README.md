@@ -94,11 +94,11 @@ docker login
 cd app/
 docker build . -t mrmtonio/captcha-api:latest
 docker push mrmtonio/captcha-api:latest
+cd ..
 
 # deploy API
 kubectl create namespace captcha-api
 kubens captcha-api
-cd ..
 kubectl apply -f ./deployments/app/deployment.yaml
 ```
 
@@ -110,7 +110,7 @@ kubectl port-forward -n clickhouse service/myclickhouse 8123:8123 &
 kubectl port-forward -n captcha-api service/captcha-api 8000:8000 &
 
 ## Create a Kafka Topic
-open http://localhost:9021
+xdg-open http://localhost:9021
 # Home > Cluster > Topics > Add Topic
 # create a topic named `captcha`
 # Topics > captcha > Schema > Set a Schema > JSON Schema
@@ -118,6 +118,7 @@ open http://localhost:9021
 
 ## Create Kafka table on Clickhouse
 # use the command below to go on the clickhouse UI
+xdg-open  http://localhost:8123
 # run all the commands on ./utils/create_table.sql
 
 #############################
@@ -137,13 +138,15 @@ curl localhost:8000/v1/
 curl 'http://localhost:8000/v1/report?site_id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' -H 'Content-Type: application/json'
 
 # send a captcha event
-curl -X POST localhost:8000/v1/event -d $json -H 'Content-Type: application/json'
+curl -X POST localhost:8000/v1/event \
+-d ' {"site_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "type": "serve", "correlation_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "time": "2001-01-01T05:55:07" }' \
+-H 'Content-Type: application/json'
 
 # send many captcha events from a json file
-while read -r $json
+while read -r json
 do
   curl -X POST localhost:8000/v1/event -d $json -H 'Content-Type: application/json'
-done < data.ndjson
+done < utils/data.ndjson
 
 :)
 ```

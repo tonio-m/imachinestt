@@ -5,14 +5,11 @@ import requests
 from uuid import UUID
 from os import environ
 from pydantic import BaseModel
-sys.path.append("../src/")
+sys.path.append("src/")
 from models import CaptchaEvent
 
 
-CLICKHOUSE_HOST=environ['CLICKHOUSE_HOST']
-KAFKA_TOPIC_NAME=environ['KAFKA_TOPIC_NAME']
-CLICKHOUSE_PORT=int(environ['CLICKHOUSE_PORT'])
-KAFKA_BOOTSTRAP_SERVER=environ['KAFKA_BOOTSTRAP_SERVER']
+API_URL=environ['API_URL'].strip('/')
 
 
 class Counter(BaseModel):
@@ -23,7 +20,7 @@ class Counter(BaseModel):
 
 
 class PostEventResponse(BaseModel):
-    topic = KAFKA_TOPIC_NAME
+    topic: str
     message: str
     status: str
 
@@ -38,7 +35,7 @@ def test_post_event():
     CaptchaEvent(**event)
     data = json.dumps(event)
     headers = {'Content-Type': 'application/json'}
-    response = requests.post('http://localhost:8000/v1/event', headers=headers, data=data)
+    response = requests.post(f'{API_URL}/event', headers=headers, data=data)
     assert response.status_code == 200
     body = response.json()
     PostEventResponse(**body)
@@ -46,21 +43,10 @@ def test_post_event():
 
 def test_get_report():
     headers = { 'Content-Type': 'application/json' }
-    response = requests.get('http://localhost:8000/v1/report', headers=headers)
+    response = requests.get(f'{API_URL}/report', headers=headers)
     assert response.status_code == 200
     body = response.json()
     assert 'counters' in body
     if len(body['counters']) > 0:
         counter = body['counters'][0]
         Counter(**counter)
-
-# def test_flow():
-#     headers = { 'Content-Type': 'application/json' }
-#     params = (('site_id', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'))
-#     response = requests.get('http://localhost:8000/v1/report', headers=headers, params=params)
-#     assert response.status_code == 200
-#     assert 'counters' in response
-#     if len(response['counters']) > 0:
-#         counter = response['counters'][0]
-#         Counter(**counter)
-
