@@ -13,7 +13,7 @@ This is my solution to the intuition machines challenge.
 - [X] POST Event endpoint
 
   ```sh
-  curl -X POST localhost:8000/v1/events \
+  curl -X POST localhost:8000/v1/event \
   -d '{ "site_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "type": "serve", "correlation_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "time": "2001-01-01T05:55:07"}' \
   -H 'Content-Type: application/json'
   ```
